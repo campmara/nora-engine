@@ -1,0 +1,17 @@
+root = true
+
+end_of_line = lf
+
+# All files
+[*]
+indent_style = space
+
+# Xml files
+[*.xml]
+indent_size = 4
+
+[*.cpp]
+indent_size = 4
+
+[*.h]
+indent_size = 4
