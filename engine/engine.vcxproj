@@ -60,6 +60,7 @@
       <ConformanceMode>true</ConformanceMode>
       <TreatWarningAsError>true</TreatWarningAsError>
       <LanguageStandard_C>Default</LanguageStandard_C>
+      <AdditionalIncludeDirectories>$(SolutionDir)..\engine\engine\src</AdditionalIncludeDirectories>
     </ClCompile>
     <Link>
       <SubSystem>Windows</SubSystem>
@@ -76,6 +77,7 @@
       <ConformanceMode>true</ConformanceMode>
       <TreatWarningAsError>true</TreatWarningAsError>
       <LanguageStandard_C>Default</LanguageStandard_C>
+      <AdditionalIncludeDirectories>$(SolutionDir)..\engine\engine\src</AdditionalIncludeDirectories>
     </ClCompile>
     <Link>
       <SubSystem>Windows</SubSystem>
@@ -88,8 +90,10 @@
     <ClInclude Include="src\nora_app.h" />
     <ClInclude Include="src\nora.h" />
     <ClInclude Include="src\nora_defines.h" />
+    <ClInclude Include="src\nora_input.h" />
   </ItemGroup>
   <ItemGroup>
+    <ClCompile Include="src\nora_app_windows.cpp" />
     <ClCompile Include="src\nora_app_windows.h" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />

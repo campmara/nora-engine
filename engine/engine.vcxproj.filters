@@ -24,9 +24,15 @@
     <ClInclude Include="src\nora_defines.h">
       <Filter>Header Files</Filter>
     </ClInclude>
+    <ClInclude Include="src\nora_input.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="src\nora_app_windows.h">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="src\nora_app_windows.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
   </ItemGroup>
