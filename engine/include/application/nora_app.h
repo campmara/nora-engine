@@ -19,13 +19,13 @@ namespace nora
         const uint32 DEFAULT_WINDOW_WIDTH = 1366;
         const uint32 DEFAULT_WINDOW_HEIGHT = 768;
 
-        uint32 screenWidth = 0;
-        uint32 screenHeight = 0;
+        uint32 screen_width = 0;
+        uint32 screen_height = 0;
 
-        uint32 windowWidth = 0;
-        uint32 windowHeight = 0;
+        uint32 window_width = 0;
+        uint32 window_height = 0;
 
-        bool32 isFullScreen = false;
+        bool32 is_fullscreen = false;
     };
 } // namespace nora
 

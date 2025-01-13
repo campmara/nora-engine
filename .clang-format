@@ -11,6 +11,8 @@ DerivePointerAlignment: false
 PointerAlignment: Right
 BreakBeforeBraces: Allman
 NamespaceIndentation: All
+IndentCaseLabels: true
+IndentPPDirectives: BeforeHash
 BinPackArguments: true
 BinPackParameters: true
 PackConstructorInitializers: NextLine
@@ -23,5 +25,4 @@ AllowShortEnumsOnASingleLine: false
 AllowShortCaseLabelsOnASingleLine: false
 AllowShortLoopsOnASingleLine: false
 AllowAllArgumentsOnNextLine: false
-IndentPPDirectives: BeforeHash
 Cpp11BracedListStyle: false

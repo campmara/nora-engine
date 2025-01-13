@@ -14,7 +14,7 @@ namespace nora
             0xffffffff,
         };
 
-    float testCubeVertexData[] = // pos.x, pos.y, pos.z, nor.x, nor.y, nor.z, tex.u, tex.v, col.r,
+    float test_cube_vertex_data[] = // pos.x, pos.y, pos.z, nor.x, nor.y, nor.z, tex.u, tex.v, col.r,
                                  // col.g, col.b,
         {
             -1.0f, 1.0f,  -1.0f, 0.0f,  0.0f,  -1.0f, 0.0f,  0.0f,  0.973f, 0.480f, 0.002f,

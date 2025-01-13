@@ -5,7 +5,7 @@ namespace nora
 {
     void RendererD3D11::Initialize()
     {
-        if (windowHandle == nullptr)
+        if (window_handle == nullptr)
         {
             return;
         }
@@ -14,28 +14,29 @@ namespace nora
         // DEVICE AND SWAPCHAIN CREATION
         // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * *
 
-        D3D_FEATURE_LEVEL featureLevels[] = { D3D_FEATURE_LEVEL_11_0 };
+        D3D_FEATURE_LEVEL feature_levels[] = { D3D_FEATURE_LEVEL_11_0 };
 
-        DXGI_SWAP_CHAIN_DESC swapchainDesc = {};
-        swapchainDesc.BufferDesc.Width = 0;  // Use window width, will get later
-        swapchainDesc.BufferDesc.Height = 0; // Use window height, will get later
-        swapchainDesc.BufferDesc.Format = DXGI_FORMAT_B8G8R8A8_UNORM;
-        swapchainDesc.SampleDesc.Count = 1;
-        swapchainDesc.BufferUsage = DXGI_USAGE_RENDER_TARGET_OUTPUT;
-        swapchainDesc.BufferCount = 2;
-        swapchainDesc.OutputWindow = *windowHandle;
-        swapchainDesc.Windowed = TRUE;
-        swapchainDesc.SwapEffect = DXGI_SWAP_EFFECT_FLIP_DISCARD;
+        DXGI_SWAP_CHAIN_DESC swapchain_desc = {};
+        swapchain_desc.BufferDesc.Width = 0;  // Use window width, will get later
+        swapchain_desc.BufferDesc.Height = 0; // Use window height, will get later
+        swapchain_desc.BufferDesc.Format = DXGI_FORMAT_B8G8R8A8_UNORM;
+        swapchain_desc.SampleDesc.Count = 1;
+        swapchain_desc.BufferUsage = DXGI_USAGE_RENDER_TARGET_OUTPUT;
+        swapchain_desc.BufferCount = 2;
+        swapchain_desc.OutputWindow = *window_handle;
+        swapchain_desc.Windowed = TRUE;
+        swapchain_desc.SwapEffect = DXGI_SWAP_EFFECT_FLIP_DISCARD;
 
         ID3D11Device *device;
 
         const UINT flags = D3D11_CREATE_DEVICE_BGRA_SUPPORT | D3D11_CREATE_DEVICE_DEBUG;
         D3D11CreateDeviceAndSwapChain(nullptr, D3D_DRIVER_TYPE_HARDWARE, nullptr, flags,
-                                      featureLevels, ARRAYSIZE(featureLevels), D3D11_SDK_VERSION,
-                                      &swapchainDesc, &swapchain, &device, nullptr, &deviceContext);
+                                      feature_levels, ARRAYSIZE(feature_levels), D3D11_SDK_VERSION,
+                                      &swapchain_desc, &swapchain, &device, nullptr,
+                                      &device_context);
 
         // This updates the swapchainDesc with the actual HWND window size
-        swapchain->GetDesc(&swapchainDesc);
+        swapchain->GetDesc(&swapchain_desc);
 
         // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * *
         // FRAMEBUFFER AND RENDER TARGET
@@ -45,41 +46,42 @@ namespace nora
         swapchain->GetBuffer(0, __uuidof(ID3D11Texture2D), (void **)&framebuffer);
 
         // Needed for SRGB framebuffer when using FLIP model swap effect
-        D3D11_RENDER_TARGET_VIEW_DESC framebufferRTVDesc = {};
-        framebufferRTVDesc.Format = DXGI_FORMAT_B8G8R8A8_UNORM_SRGB;
-        framebufferRTVDesc.ViewDimension = D3D11_RTV_DIMENSION_TEXTURE2D;
+        D3D11_RENDER_TARGET_VIEW_DESC framebuffer_RTV_desc = {};
+        framebuffer_RTV_desc.Format = DXGI_FORMAT_B8G8R8A8_UNORM_SRGB;
+        framebuffer_RTV_desc.ViewDimension = D3D11_RTV_DIMENSION_TEXTURE2D;
 
-        device->CreateRenderTargetView(framebuffer, &framebufferRTVDesc, &framebufferRTV);
+        device->CreateRenderTargetView(framebuffer, &framebuffer_RTV_desc, &framebuffer_render_target_view);
 
         // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * *
         // DEPTH AND STENCIL BUFFERS
         // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * *
 
-        D3D11_TEXTURE2D_DESC depthBufferDesc;
+        D3D11_TEXTURE2D_DESC depth_buffer_desc;
 
         // Copy framebuffer properties, they are mostly the same
-        framebuffer->GetDesc(&depthBufferDesc);
+        framebuffer->GetDesc(&depth_buffer_desc);
 
-        depthBufferDesc.Format = DXGI_FORMAT_D24_UNORM_S8_UINT;
-        depthBufferDesc.BindFlags = D3D11_BIND_DEPTH_STENCIL;
+        depth_buffer_desc.Format = DXGI_FORMAT_D24_UNORM_S8_UINT;
+        depth_buffer_desc.BindFlags = D3D11_BIND_DEPTH_STENCIL;
 
-        device->CreateTexture2D(&depthBufferDesc, nullptr, &depthBuffer);
+        device->CreateTexture2D(&depth_buffer_desc, nullptr, &depth_buffer);
 
-        device->CreateDepthStencilView(depthBuffer, nullptr, &depthBufferDSV);
+        device->CreateDepthStencilView(depth_buffer, nullptr, &depth_buffer_depth_stencil_view);
 
         // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * *
         // CREATE VERTEX SHADER
         // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * *
 
-        ID3DBlob *vertexShaderCSO;
+        ID3DBlob *vertex_shader_cso;
 
-        D3DCompileFromFile(L"C:\\work\\cpp\\nora\\engine\\engine\\shaders\\test.hlsl", nullptr, nullptr,
-                           "VertexShaderMain", "vs_5_0", 0, 0, &vertexShaderCSO, nullptr);
+        D3DCompileFromFile(L"C:\\work\\cpp\\nora\\engine\\engine\\shaders\\test.hlsl", nullptr,
+                           nullptr, "VertexShaderMain", "vs_5_0", 0, 0, &vertex_shader_cso,
+                           nullptr);
 
-        device->CreateVertexShader(vertexShaderCSO->GetBufferPointer(),
-                                   vertexShaderCSO->GetBufferSize(), nullptr, &vertexShader);
+        device->CreateVertexShader(vertex_shader_cso->GetBufferPointer(),
+                                   vertex_shader_cso->GetBufferSize(), nullptr, &vertex_shader);
 
-        D3D11_INPUT_ELEMENT_DESC inputElementDesc[] = {
+        D3D11_INPUT_ELEMENT_DESC input_element_desc[] = {
             { "POS", 0, DXGI_FORMAT_R32G32B32_FLOAT, 0, 0,                            D3D11_INPUT_PER_VERTEX_DATA, 0 },
             { "NOR", 0, DXGI_FORMAT_R32G32B32_FLOAT, 0, D3D11_APPEND_ALIGNED_ELEMENT,
              D3D11_INPUT_PER_VERTEX_DATA,                                                                          0 },
@@ -89,117 +91,117 @@ namespace nora
              D3D11_INPUT_PER_VERTEX_DATA,                                                                          0 },
         };
 
-        device->CreateInputLayout(inputElementDesc, ARRAYSIZE(inputElementDesc),
-                                  vertexShaderCSO->GetBufferPointer(),
-                                  vertexShaderCSO->GetBufferSize(), &inputLayout);
+        device->CreateInputLayout(input_element_desc, ARRAYSIZE(input_element_desc),
+                                  vertex_shader_cso->GetBufferPointer(),
+                                  vertex_shader_cso->GetBufferSize(), &input_layout);
 
         // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * *
         // CREATE PIXEL SHADER
         // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * *
 
-        ID3DBlob *pixelShaderCSO;
+        ID3DBlob *pixel_shader_cso;
 
-        D3DCompileFromFile(L"C:\\work\\cpp\\nora\\engine\\engine\\shaders\\test.hlsl", nullptr, nullptr,
-                           "PixelShaderMain", "ps_5_0", 0, 0, &pixelShaderCSO, nullptr);
+        D3DCompileFromFile(L"C:\\work\\cpp\\nora\\engine\\engine\\shaders\\test.hlsl", nullptr,
+                           nullptr, "PixelShaderMain", "ps_5_0", 0, 0, &pixel_shader_cso, nullptr);
 
-        device->CreatePixelShader(pixelShaderCSO->GetBufferPointer(),
-                                  pixelShaderCSO->GetBufferSize(), nullptr, &pixelShader);
+        device->CreatePixelShader(pixel_shader_cso->GetBufferPointer(),
+                                  pixel_shader_cso->GetBufferSize(), nullptr, &pixel_shader);
 
         // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * *
         // RASTERIZER STATE
         // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * *
 
-        D3D11_RASTERIZER_DESC rasterizerDesc = {};
-        rasterizerDesc.FillMode = D3D11_FILL_SOLID;
-        rasterizerDesc.CullMode = D3D11_CULL_BACK;
+        D3D11_RASTERIZER_DESC rasterizer_desc = {};
+        rasterizer_desc.FillMode = D3D11_FILL_SOLID;
+        rasterizer_desc.CullMode = D3D11_CULL_BACK;
 
-        device->CreateRasterizerState(&rasterizerDesc, &rasterizerState);
+        device->CreateRasterizerState(&rasterizer_desc, &rasterizer_state);
 
         // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * *
         // SAMPLER STATE
         // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * *
 
-        D3D11_SAMPLER_DESC samplerDesc = {};
-        samplerDesc.Filter = D3D11_FILTER_MIN_MAG_MIP_POINT;
-        samplerDesc.AddressU = D3D11_TEXTURE_ADDRESS_WRAP;
-        samplerDesc.AddressV = D3D11_TEXTURE_ADDRESS_WRAP;
-        samplerDesc.AddressW = D3D11_TEXTURE_ADDRESS_WRAP;
-        samplerDesc.ComparisonFunc = D3D11_COMPARISON_NEVER;
+        D3D11_SAMPLER_DESC sampler_desc = {};
+        sampler_desc.Filter = D3D11_FILTER_MIN_MAG_MIP_POINT;
+        sampler_desc.AddressU = D3D11_TEXTURE_ADDRESS_WRAP;
+        sampler_desc.AddressV = D3D11_TEXTURE_ADDRESS_WRAP;
+        sampler_desc.AddressW = D3D11_TEXTURE_ADDRESS_WRAP;
+        sampler_desc.ComparisonFunc = D3D11_COMPARISON_NEVER;
 
-        device->CreateSamplerState(&samplerDesc, &samplerState);
+        device->CreateSamplerState(&sampler_desc, &sampler_state);
 
         // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * *
         // DEPTH STENCIL STATE
         // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * *
 
-        D3D11_DEPTH_STENCIL_DESC depthStencilDesc = {};
-        depthStencilDesc.DepthEnable = TRUE;
-        depthStencilDesc.DepthWriteMask = D3D11_DEPTH_WRITE_MASK_ALL;
-        depthStencilDesc.DepthFunc = D3D11_COMPARISON_LESS;
+        D3D11_DEPTH_STENCIL_DESC depth_stencil_desc = {};
+        depth_stencil_desc.DepthEnable = TRUE;
+        depth_stencil_desc.DepthWriteMask = D3D11_DEPTH_WRITE_MASK_ALL;
+        depth_stencil_desc.DepthFunc = D3D11_COMPARISON_LESS;
 
-        device->CreateDepthStencilState(&depthStencilDesc, &depthStencilState);
+        device->CreateDepthStencilState(&depth_stencil_desc, &depth_stencil_state);
 
         // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * *
         // CONSTANT BUFFER SETUP
         // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * *
 
-        D3D11_BUFFER_DESC constantBufferDesc = {};
-        constantBufferDesc.ByteWidth =
+        D3D11_BUFFER_DESC constant_buffer_desc = {};
+        constant_buffer_desc.ByteWidth =
             sizeof(RenderConstants) + 0xf &
             0xfffffff0; // ensure constant buffer size is multiple of 16 bytes
-        constantBufferDesc.Usage = D3D11_USAGE_DYNAMIC; // will be updated from CPU every frame
-        constantBufferDesc.BindFlags = D3D11_BIND_CONSTANT_BUFFER;
-        constantBufferDesc.CPUAccessFlags = D3D11_CPU_ACCESS_WRITE;
+        constant_buffer_desc.Usage = D3D11_USAGE_DYNAMIC; // will be updated from CPU every frame
+        constant_buffer_desc.BindFlags = D3D11_BIND_CONSTANT_BUFFER;
+        constant_buffer_desc.CPUAccessFlags = D3D11_CPU_ACCESS_WRITE;
 
-        device->CreateBuffer(&constantBufferDesc, nullptr, &constantBuffer);
+        device->CreateBuffer(&constant_buffer_desc, nullptr, &constant_buffer);
 
         // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * *
         // TEXTURE DESCRIPTION AND SHADER RESOURCE VIEW
         // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * *
 
-        D3D11_TEXTURE2D_DESC textureDesc = {};
-        textureDesc.Width = TEST_CUBE_TEXTURE_WIDTH;
-        textureDesc.Height = TEST_CUBE_TEXTURE_HEIGHT;
-        textureDesc.MipLevels = 1;
-        textureDesc.ArraySize = 1;
-        textureDesc.Format = DXGI_FORMAT_B8G8R8A8_UNORM_SRGB; // same as framebuffer(view)
-        textureDesc.SampleDesc.Count = 1;
-        textureDesc.Usage = D3D11_USAGE_IMMUTABLE; // will never be updated
-        textureDesc.BindFlags = D3D11_BIND_SHADER_RESOURCE;
+        D3D11_TEXTURE2D_DESC texture_desc = {};
+        texture_desc.Width = TEST_CUBE_TEXTURE_WIDTH;
+        texture_desc.Height = TEST_CUBE_TEXTURE_HEIGHT;
+        texture_desc.MipLevels = 1;
+        texture_desc.ArraySize = 1;
+        texture_desc.Format = DXGI_FORMAT_B8G8R8A8_UNORM_SRGB; // same as framebuffer(view)
+        texture_desc.SampleDesc.Count = 1;
+        texture_desc.Usage = D3D11_USAGE_IMMUTABLE; // will never be updated
+        texture_desc.BindFlags = D3D11_BIND_SHADER_RESOURCE;
 
-        D3D11_SUBRESOURCE_DATA textureSRD = {};
-        textureSRD.pSysMem = testCubeTextureData;
-        textureSRD.SysMemPitch = TEST_CUBE_TEXTURE_WIDTH * sizeof(UINT);
+        D3D11_SUBRESOURCE_DATA texture_subresource_data = {};
+        texture_subresource_data.pSysMem = testCubeTextureData;
+        texture_subresource_data.SysMemPitch = TEST_CUBE_TEXTURE_WIDTH * sizeof(UINT);
 
-        device->CreateTexture2D(&textureDesc, &textureSRD, &texture);
+        device->CreateTexture2D(&texture_desc, &texture_subresource_data, &texture);
 
-        device->CreateShaderResourceView(texture, nullptr, &textureSRV);
+        device->CreateShaderResourceView(texture, nullptr, &texture_shader_resource_view);
 
         // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * *
         // VERTEX BUFFER
         // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * *
 
-        D3D11_BUFFER_DESC vertexBufferDesc = {};
-        vertexBufferDesc.ByteWidth = sizeof(testCubeVertexData);
-        vertexBufferDesc.Usage = D3D11_USAGE_IMMUTABLE; // will never be updated
-        vertexBufferDesc.BindFlags = D3D11_BIND_VERTEX_BUFFER;
+        D3D11_BUFFER_DESC vertex_buffer_desc = {};
+        vertex_buffer_desc.ByteWidth = sizeof(test_cube_vertex_data);
+        vertex_buffer_desc.Usage = D3D11_USAGE_IMMUTABLE; // will never be updated
+        vertex_buffer_desc.BindFlags = D3D11_BIND_VERTEX_BUFFER;
 
-        D3D11_SUBRESOURCE_DATA vertexBufferSRD = { testCubeVertexData };
+        D3D11_SUBRESOURCE_DATA vertex_buffer_subresource_data = { test_cube_vertex_data };
 
-        device->CreateBuffer(&vertexBufferDesc, &vertexBufferSRD, &vertexBuffer);
+        device->CreateBuffer(&vertex_buffer_desc, &vertex_buffer_subresource_data, &vertex_buffer);
 
         // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * *
         // INDEX BUFFER
         // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * *
 
-        D3D11_BUFFER_DESC indexBufferDesc = {};
-        indexBufferDesc.ByteWidth = sizeof(testCubeIndexData);
-        indexBufferDesc.Usage = D3D11_USAGE_IMMUTABLE; // will never be updated
-        indexBufferDesc.BindFlags = D3D11_BIND_INDEX_BUFFER;
+        D3D11_BUFFER_DESC index_buffer_desc = {};
+        index_buffer_desc.ByteWidth = sizeof(testCubeIndexData);
+        index_buffer_desc.Usage = D3D11_USAGE_IMMUTABLE; // will never be updated
+        index_buffer_desc.BindFlags = D3D11_BIND_INDEX_BUFFER;
 
-        D3D11_SUBRESOURCE_DATA indexBufferSRD = { testCubeIndexData };
+        D3D11_SUBRESOURCE_DATA index_buffer_subresource_data = { testCubeIndexData };
 
-        device->CreateBuffer(&indexBufferDesc, &indexBufferSRD, &indexBuffer);
+        device->CreateBuffer(&index_buffer_desc, &index_buffer_subresource_data, &index_buffer);
 
         // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * *
         // VIEWPORT
@@ -207,59 +209,59 @@ namespace nora
 
         viewport = { 0.0f,
                      0.0f,
-                     (float)swapchainDesc.BufferDesc.Width,
-                     (float)swapchainDesc.BufferDesc.Height,
+                     (float)swapchain_desc.BufferDesc.Width,
+                     (float)swapchain_desc.BufferDesc.Height,
                      0.0f,
                      1.0f };
 
-        viewportWidth = viewport.Width / viewport.Height; // width (aspect ratio)
+        viewport_width = viewport.Width / viewport.Height; // width (aspect ratio)
     }
 
     void RendererD3D11::ProcessFrame()
     {
-        if (windowHandle == nullptr)
+        if (window_handle == nullptr)
         {
             return;
         }
 
-        Matrix4x4 rotateX = { 1,
-                              0,
-                              0,
-                              0,
-                              0,
-                              (float)cos(modelRotation.x),
-                              -(float)sin(modelRotation.x),
-                              0,
-                              0,
-                              (float)sin(modelRotation.x),
-                              (float)cos(modelRotation.x),
-                              0,
-                              0,
-                              0,
-                              0,
-                              1 };
-        Matrix4x4 rotateY = {
-            (float)cos(modelRotation.y),  0, (float)sin(modelRotation.y), 0, 0, 1, 0, 0,
-            -(float)sin(modelRotation.y), 0, (float)cos(modelRotation.y), 0, 0, 0, 0, 1
+        Matrix4x4 rotate_x = { 1,
+                               0,
+                               0,
+                               0,
+                               0,
+                               (float)cos(model_rotation.x),
+                               -(float)sin(model_rotation.x),
+                               0,
+                               0,
+                               (float)sin(model_rotation.x),
+                               (float)cos(model_rotation.x),
+                               0,
+                               0,
+                               0,
+                               0,
+                               1 };
+        Matrix4x4 rotate_y = {
+            (float)cos(model_rotation.y),  0, (float)sin(model_rotation.y), 0, 0, 1, 0, 0,
+            -(float)sin(model_rotation.y), 0, (float)cos(model_rotation.y), 0, 0, 0, 0, 1
         };
-        Matrix4x4 rotateZ = { (float)cos(modelRotation.z),
-                              -(float)sin(modelRotation.z),
-                              0,
-                              0,
-                              (float)sin(modelRotation.z),
-                              (float)cos(modelRotation.z),
-                              0,
-                              0,
-                              0,
-                              0,
-                              1,
-                              0,
-                              0,
-                              0,
-                              0,
-                              1 };
+        Matrix4x4 rotate_z = { (float)cos(model_rotation.z),
+                               -(float)sin(model_rotation.z),
+                               0,
+                               0,
+                               (float)sin(model_rotation.z),
+                               (float)cos(model_rotation.z),
+                               0,
+                               0,
+                               0,
+                               0,
+                               1,
+                               0,
+                               0,
+                               0,
+                               0,
+                               1 };
         Matrix4x4 scale = {
-            modelScale.x, 0, 0, 0, 0, modelScale.y, 0, 0, 0, 0, modelScale.z, 0, 0, 0, 0, 1
+            model_scale.x, 0, 0, 0, 0, model_scale.y, 0, 0, 0, 0, model_scale.z, 0, 0, 0, 0, 1
         };
         Matrix4x4 translate = { 1,
                                 0,
@@ -273,88 +275,88 @@ namespace nora
                                 0,
                                 1,
                                 0,
-                                modelTranslation.x,
-                                modelTranslation.y,
-                                modelTranslation.z,
+                                model_translation.x,
+                                model_translation.y,
+                                model_translation.z,
                                 1 };
 
-        modelRotation.x += 0.005f;
-        modelRotation.y += 0.009f;
-        modelRotation.z += 0.001f;
+        model_rotation.x += 0.005f;
+        model_rotation.y += 0.009f;
+        model_rotation.z += 0.001f;
 
         // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * *
         // MAP DEVICE CONTEXT
         // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * *
 
-        D3D11_MAPPED_SUBRESOURCE constantBufferMSR;
+        D3D11_MAPPED_SUBRESOURCE constant_buffer_mapped_subresource;
 
         // update constant buffer every frame
-        deviceContext->Map(constantBuffer, 0, D3D11_MAP_WRITE_DISCARD, 0, &constantBufferMSR);
+        device_context->Map(constant_buffer, 0, D3D11_MAP_WRITE_DISCARD, 0, &constant_buffer_mapped_subresource);
         {
-            RenderConstants *constants = (RenderConstants *)constantBufferMSR.pData;
-            constants->transform = rotateX * rotateY * rotateZ * scale * translate;
-            constants->projection = { 2 * viewportNearClip / viewportWidth,
+            RenderConstants *constants = (RenderConstants *)constant_buffer_mapped_subresource.pData;
+            constants->transform = rotate_x * rotate_y * rotate_z * scale * translate;
+            constants->projection = { 2 * viewport_near_clip / viewport_width,
                                       0,
                                       0,
                                       0,
                                       0,
-                                      2 * viewportNearClip / viewportHeight,
+                                      2 * viewport_near_clip / viewport_height,
                                       0,
                                       0,
                                       0,
                                       0,
-                                      viewportFarClip / (viewportFarClip - viewportNearClip),
+                                      viewport_far_clip / (viewport_far_clip - viewport_near_clip),
                                       1,
                                       0,
                                       0,
-                                      viewportNearClip * viewportFarClip /
-                                          (viewportNearClip - viewportFarClip),
+                                      viewport_near_clip * viewport_far_clip /
+                                          (viewport_near_clip - viewport_far_clip),
                                       0 };
-            constants->lightDirection = { 1.0f, -1.0f, 1.0f };
+            constants->light_direction = { 1.0f, -1.0f, 1.0f };
         }
-        deviceContext->Unmap(constantBuffer, 0);
+        device_context->Unmap(constant_buffer, 0);
 
         // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * *
         // CLEAR AND SETUP FRAME
         // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * *
 
-        deviceContext->ClearRenderTargetView(framebufferRTV, clearColor);
-        deviceContext->ClearDepthStencilView(depthBufferDSV, D3D11_CLEAR_DEPTH, 1.0f, 0);
+        device_context->ClearRenderTargetView(framebuffer_render_target_view, clear_color);
+        device_context->ClearDepthStencilView(depth_buffer_depth_stencil_view, D3D11_CLEAR_DEPTH, 1.0f, 0);
 
-        deviceContext->IASetPrimitiveTopology(D3D11_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
-        deviceContext->IASetInputLayout(inputLayout);
-        deviceContext->IASetVertexBuffers(0, 1, &vertexBuffer, &stride, &offset);
-        deviceContext->IASetIndexBuffer(indexBuffer, DXGI_FORMAT_R32_UINT, 0);
+        device_context->IASetPrimitiveTopology(D3D11_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
+        device_context->IASetInputLayout(input_layout);
+        device_context->IASetVertexBuffers(0, 1, &vertex_buffer, &stride, &offset);
+        device_context->IASetIndexBuffer(index_buffer, DXGI_FORMAT_R32_UINT, 0);
 
-        deviceContext->VSSetShader(vertexShader, nullptr, 0);
-        deviceContext->VSSetConstantBuffers(0, 1, &constantBuffer);
+        device_context->VSSetShader(vertex_shader, nullptr, 0);
+        device_context->VSSetConstantBuffers(0, 1, &constant_buffer);
 
-        deviceContext->RSSetViewports(1, &viewport);
-        deviceContext->RSSetState(rasterizerState);
+        device_context->RSSetViewports(1, &viewport);
+        device_context->RSSetState(rasterizer_state);
 
-        deviceContext->PSSetShader(pixelShader, nullptr, 0);
-        deviceContext->PSSetShaderResources(0, 1, &textureSRV);
-        deviceContext->PSSetSamplers(0, 1, &samplerState);
+        device_context->PSSetShader(pixel_shader, nullptr, 0);
+        device_context->PSSetShaderResources(0, 1, &texture_shader_resource_view);
+        device_context->PSSetSamplers(0, 1, &sampler_state);
 
-        deviceContext->OMSetRenderTargets(1, &framebufferRTV, depthBufferDSV);
-        deviceContext->OMSetDepthStencilState(depthStencilState, 0);
-        deviceContext->OMSetBlendState(nullptr, nullptr,
-                                       0xffffffff); // use default blend mode (no blending)
+        device_context->OMSetRenderTargets(1, &framebuffer_render_target_view, depth_buffer_depth_stencil_view);
+        device_context->OMSetDepthStencilState(depth_stencil_state, 0);
+        device_context->OMSetBlendState(nullptr, nullptr,
+                                        0xffffffff); // use default blend mode (no blending)
 
         // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * *
         // DRAW FRAME AND PRESENT SWAPCHAIN
         // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * *
 
-        deviceContext->DrawIndexed(ARRAYSIZE(testCubeIndexData), 0, 0);
+        device_context->DrawIndexed(ARRAYSIZE(testCubeIndexData), 0, 0);
         swapchain->Present(1, 0);
     }
 
-    void RendererD3D11::Shutdown() 
+    void RendererD3D11::Shutdown()
     {
-        indexBuffer->Release();
-        indexBuffer = nullptr;
+        index_buffer->Release();
+        index_buffer = nullptr;
 
-        vertexBuffer->Release();
-        vertexBuffer = nullptr;
+        vertex_buffer->Release();
+        vertex_buffer = nullptr;
     }
 } // namespace nora

@@ -15,7 +15,7 @@
     </Filter>
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="include\nora_app.h">
+    <ClInclude Include="include\application\nora_app.h">
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="include\nora.h">
@@ -33,7 +33,7 @@
     <ClInclude Include="include\rendering\nora_renderer_d3d11.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="include\nora_app_windows.h">
+    <ClInclude Include="include\application\nora_app_windows.h">
       <Filter>Source Files</Filter>
     </ClInclude>
     <ClInclude Include="include\math\nora_math.h">
@@ -48,12 +48,30 @@
     <ClInclude Include="include\math\nora_matrix4x4.h">
       <Filter>Header Files</Filter>
     </ClInclude>
+    <ClInclude Include="include\rendering\nora_renderer_gl.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="lib\glad\include\KHR\khrplatform.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="lib\glad\include\glad\glad.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="include\nora_asserts.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="include\nora_memory.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="src\nora_app_windows.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
     <ClCompile Include="src\nora_renderer_d3d11.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="lib\glad\src\glad.c">
       <Filter>Source Files</Filter>
     </ClCompile>
   </ItemGroup>

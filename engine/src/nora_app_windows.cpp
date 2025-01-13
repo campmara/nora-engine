@@ -1,11 +1,11 @@
-#include "nora_app_windows.h"
+#include "application/nora_app_windows.h"
 #include "rendering/nora_renderer_d3d11.h"
 
 namespace nora
 {
     void ApplicationWindows::Initialize()
     {
-        hinstance = GetModuleHandle(NULL);
+        instance_handle = GetModuleHandle(NULL);
 
         WNDCLASSEX wc = {};
         wc.cbSize = sizeof(WNDCLASSEX);
@@ -13,62 +13,84 @@ namespace nora
         wc.lpfnWndProc = WndProc;
         wc.cbClsExtra = 0;
         wc.cbWndExtra = 0;
-        wc.hInstance = hinstance;
-        wc.hIcon = LoadIcon(NULL, IDI_WINLOGO);
-        wc.hCursor = LoadCursor(NULL, IDC_ARROW);
+        wc.hInstance = instance_handle;
+        wc.hIcon = LoadIcon(0, IDI_APPLICATION);
+        wc.hCursor = LoadCursor(0, IDC_ARROW);
         wc.hbrBackground = (HBRUSH)GetStockObject(BLACK_BRUSH);
-        wc.lpszMenuName = NULL;
+        wc.lpszMenuName = 0;
         wc.lpszClassName = APP_NAME;
         wc.hIconSm = wc.hIcon;
 
         RegisterClassEx(&wc);
 
-        screenWidth = GetSystemMetrics(SM_CXSCREEN);
-        screenHeight = GetSystemMetrics(SM_CYSCREEN);
-        int32 posX, posY;
+        screen_width = GetSystemMetrics(SM_CXSCREEN);
+        screen_height = GetSystemMetrics(SM_CYSCREEN);
+        int32 pos_x, pos_y;
 
-        if (isFullScreen)
+        if (is_fullscreen)
         {
             DEVMODE dmScreenSettings;
             memset(&dmScreenSettings, 0, sizeof(dmScreenSettings));
             dmScreenSettings.dmSize = sizeof(dmScreenSettings);
             dmScreenSettings.dmFields = DM_BITSPERPEL | DM_PELSWIDTH | DM_PELSHEIGHT;
             dmScreenSettings.dmBitsPerPel = 32;
-            dmScreenSettings.dmPelsWidth = (DWORD)screenWidth;
-            dmScreenSettings.dmPelsHeight = (DWORD)screenHeight;
+            dmScreenSettings.dmPelsWidth = (DWORD)screen_width;
+            dmScreenSettings.dmPelsHeight = (DWORD)screen_height;
 
             ChangeDisplaySettings(&dmScreenSettings, CDS_FULLSCREEN);
 
-            posX = posY = 0;
+            pos_x = pos_y = 0;
         }
         else
         {
-            screenWidth = DEFAULT_WINDOW_WIDTH;
-            screenHeight = DEFAULT_WINDOW_HEIGHT;
-            posX = (GetSystemMetrics(SM_CXSCREEN) - screenWidth) / 2;
-            posY = (GetSystemMetrics(SM_CYSCREEN) - screenHeight) / 2;
+            screen_width = DEFAULT_WINDOW_WIDTH;
+            screen_height = DEFAULT_WINDOW_HEIGHT;
+            pos_x = (GetSystemMetrics(SM_CXSCREEN) - screen_width) / 2;
+            pos_y = (GetSystemMetrics(SM_CYSCREEN) - screen_height) / 2;
         }
 
-        hwnd = CreateWindowEx(WS_EX_APPWINDOW, APP_NAME, APP_NAME,
-                              WS_CLIPSIBLINGS | WS_CLIPCHILDREN | WS_POPUP, posX, posY, screenWidth,
-                              screenHeight, NULL, NULL, hinstance, NULL);
+        window_handle = CreateWindowExW(WS_EX_APPWINDOW, APP_NAME, APP_NAME,
+                                       WS_CLIPSIBLINGS | WS_CLIPCHILDREN | WS_OVERLAPPEDWINDOW, pos_x, pos_y,
+                                       screen_width, screen_height, NULL, NULL, instance_handle, NULL);
 
-        ShowWindow(hwnd, SW_SHOW);
-        SetForegroundWindow(hwnd);
-        SetFocus(hwnd);
+        ShowWindow(window_handle, SW_SHOW);
+        SetForegroundWindow(window_handle);
+        SetFocus(window_handle);
 
         ShowCursor(true);
 
         // Set up the d3d11 renderer for now.
-        renderer = new RendererD3D11(&hwnd);
+        renderer = new RendererD3D11(&window_handle);
         renderer->Initialize();
     }
 
     void ApplicationWindows::MainLoop()
     {
+        if (!window_handle)
+        {
+            return;
+        }
+
         while (true)
         {
-            renderer->ProcessFrame();
+            MSG message;
+
+            // Windows Message Handling
+            if (PeekMessage(&message, 0, 0, 0, PM_REMOVE))
+            {
+                TranslateMessage(&message);
+                DispatchMessage(&message);
+
+                if (message.message == WM_QUIT)
+                {
+                    break;
+                }
+            }
+            else
+            {
+                // Main Game Loop
+                renderer->ProcessFrame();
+            }
         }
     }
 
@@ -80,20 +102,20 @@ namespace nora
 
         ShowCursor(true);
 
-        if (isFullScreen)
+        if (is_fullscreen)
         {
             ChangeDisplaySettings(NULL, 0);
         }
 
-        DestroyWindow(hwnd);
-        hwnd = NULL;
+        DestroyWindow(window_handle);
+        window_handle = NULL;
 
-        UnregisterClass(APP_NAME, hinstance);
-        hinstance = NULL;
+        UnregisterClass(APP_NAME, instance_handle);
+        instance_handle = NULL;
     }
 
     HWND ApplicationWindows::GetWindowHandle() const
     {
-        return hwnd;
+        return window_handle;
     }
 } // namespace nora
